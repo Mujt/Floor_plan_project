@@ -21,7 +21,7 @@ void readFromFile() {
     input2.open("ami33.nets", ios::out | ios::in);
 
     string data1, data2;
-    regex reg1("(.+) (softrectilinear|hardrectilinear|terminal)( \\d+){0,1}( \((\\d+)\, (\\d+)\))*");
+    regex reg1("(.+) (softrectilinear|hardrectilinear|terminal)( \d+){0,1}( \((\\d+)\\, (\\d+)\))*");
     regex reg2("(\\()(\\d+)(\\, )(\\d+)(\\))");
     regex reg3("\\d+");
     smatch m;
@@ -65,14 +65,14 @@ void readFromFile() {
     else {
         cout << "ami33.blocks not exists!" << endl;
     }
-    /*for (int i = 0; i < blocks.size(); i++) {
+    for (int i = 0; i < blocks.size(); i++) {
         cout << blocks[i].id << " " << blocks[i].idNum<<" "<<blocks[i].type<<" "
             << blocks[i].coordNum;
         for (int j = 0; j < 4; j++) {
             cout << " (" << blocks[i].coords[j].x << ",  " << blocks[i].coords[j].y<<")";
         }
         cout << endl;
-    }*/
+    }
 
     regex reg4("(NetDegree : )(\\d+)(\n)(#(.*)\n)?");
     regex reg5("(.*)( B)(\t: %)?((-)?\\d+(.)?\\d+)?( %)?((-)?\\d+(.)?\\d+)?");
@@ -89,7 +89,7 @@ void readFromFile() {
         string::const_iterator its = data2.begin();
         string::const_iterator ite = data2.end();
         while (regex_search(its, ite, m, reg4)) {
-            cout << m.str() << " " << m.str(2) << endl;
+            //cout << m.str() << " " << m.str(2) << endl;
             its = m[0].second;
             int j = atoi(m.str(2).c_str());
             Net net;
@@ -117,13 +117,13 @@ void readFromFile() {
     else {
         cout << "ami33.nets not exists!" << endl;
     }
-    /*for (int i = 0; i < nets.size(); i++) {
+    for (int i = 0; i < nets.size(); i++) {
         cout << nets[i].id << " " << nets[i].netDegree;
         for (int j = 0; j < nets[i].blocks.size(); j++) {
             cout << " ("<<nets[i].blocks[j].idNum << " " << nets[i].blocks[j].n1 << " " << nets[i].blocks[j].n2 << ") ";
         }
         cout << endl;
-    }*/
+    }
     input1.close();
     input2.close();
 }
