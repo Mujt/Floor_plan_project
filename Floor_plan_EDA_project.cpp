@@ -8,7 +8,7 @@
 #include <sstream>
 #include <stdlib.h>
 
-#include "dataStruct.h"
+#include "src/dataStruct.h"
 using namespace std;
 
 string typeStr[] = { "softrectilinear","hardrectilinear","terminal" };
