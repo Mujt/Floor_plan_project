@@ -69,6 +69,7 @@ void FloorPlan::findBestExpress(std::vector<std::string>* exp)
 			 << endl;
 		}
 	}
+	of.close();
 }
 
 
