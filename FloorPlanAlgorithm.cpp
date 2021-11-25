@@ -6,6 +6,7 @@
 #include "FloorPlanAlgorithm.h"
 #include <iostream>
 #include <stack>
+#include <fstream>
 
 using namespace std;
 
@@ -31,14 +32,14 @@ FloorPlan::~FloorPlan()
 void FloorPlan::run()
 {
 	initTree();
-	vector<string> portExp; 
-	getPortlandExpress(root,&portExp);
+	vector<string> portExp;
+	getPortlandExpress(root, &portExp);
 	for (int i = 0; i < portExp.size(); i++) {
-		cout << portExp[i] <<" ";
+		cout << portExp[i] << " ";
 	}
 	cout << endl;
 	cout << judgePortlandExp(portExp) << endl;
-	cout << judgePortlandExp({"2","1","|","2","1","-","-","|"}) << endl;
+	cout << judgePortlandExp({ "2","1","|","2","1","-","-","|" }) << endl;
 	findBestExpress(&portExp);
 
 }
@@ -47,15 +48,27 @@ void FloorPlan::findBestExpress(std::vector<std::string>* exp)
 {
 	int area = 0;
 	double len = 0;
-	computeAreaLen(&area,&len,*exp);
-	cout<<"Area:" << area<<endl;
+	computeAreaLen(&area, &len, *exp);
+	cout << "Area:" << area << endl;
 	cout << "Len:" << len << endl;
 	for (int i = 0; i < (*exp).size(); i++) {
 		cout << (*exp)[i] << " ";
 	}
 	cout << endl;
-	simulatedAnnealing(exp,1,0.9999,1e-6,20000,0.9);
+	simulatedAnnealing(exp,10,0.999,1,25000,0.9);
 	computeAreaLen(&area,&len,*exp);
+	ofstream of;
+	of.open("out.txt", ios::out | ios::in);
+	for (int i = 0; i < blocks.size(); i++) {
+		if (blocks[i].type == HardBlock) {
+			of << blocks[i].id << " " << blocks[i].x << " " << blocks[i].y
+				<< " " << blocks[i].width << " " << blocks[i].height << endl;
+		}
+		else {
+			of << blocks[i].id << " " << blocks[i].x << " " << blocks[i].y
+			 << endl;
+		}
+	}
 }
 
 
@@ -85,7 +98,7 @@ void FloorPlan::initTree()
 		int b = que.front();
 		que.pop();
 		Node n;
-		n.op = 1 + rand()%2;
+		n.op = 1 + rand() % 2;
 		n.val = -1;
 		n.lchild = a;
 		n.rchild = b;
@@ -96,21 +109,30 @@ void FloorPlan::initTree()
 	}
 }
 
-void FloorPlan::Monte_Carlo(std::vector<std::string>* exp,double lamda)
+void FloorPlan::Monte_Carlo(std::vector<std::string>* exp, double lamda)
 {
 	int t = 0;
 	int i, j;
 	int size = (*exp).size();
 	int area;
-	double len,minval,val;
-	computeAreaLen(&area,&len,*exp);
+	double len, minval, val;
+	computeAreaLen(&area, &len, *exp);
 	std::vector<std::string> minexp = *exp;
 	minval = area + lamda * len;
-	while (t < 50) {
+	cout << "Mote_Carlo:" << endl;
+	while (t < 2000) {
 		for (int i = 0; i < size; i++) {
 			j = rand() % size;
 			if (i == j) {
-				continue;
+				if ((*exp)[i] == "-" || (*exp)[i] == "|") {
+					if ((*exp)[i] == "-") {
+						(*exp)[i] == "|";
+					}
+					else {
+						(*exp)[i] == "-";
+					}
+				}else
+					continue;
 			}
 			if (((*exp)[i] == "-" || (*exp)[i] == "|") && ((*exp)[j] == "-" || (*exp)[j] == "|")) {
 				swap((*exp)[i], (*exp)[j]);
@@ -139,9 +161,12 @@ void FloorPlan::Monte_Carlo(std::vector<std::string>* exp,double lamda)
 			cout << (*exp)[i] << " ";
 		}
 		cout << endl;*/
+		if (t % 200 == 0) {
+			cout << "-\\";
+		}
 		t++;
-		cout << t << endl;
 	}
+	cout << endl;
 	*exp = minexp;
 	computeAreaLen(&area, &len, *exp);
 	cout << "Area:" << area << endl;
@@ -158,17 +183,28 @@ void FloorPlan::simulatedAnnealing(std::vector<std::string>* exps, double T0, do
 	int size = (*exps).size();
 	int area;
 	double len, minval, val, preval;
-	std::vector<std::string> minexp = *exps;
+	std::vector<std::string> minexp = *exps, preexp = *exps;
 	Monte_Carlo(&minexp, lamda);
 	*exps = minexp;
 	computeAreaLen(&area, &len, *exps);
 	minval = area + lamda * len;
 	preval = minval;
+	cout << "simulatedAnnealing:";
 	while (L >= 0) {
 		i = rand() % size;
 		j = rand() % size;
+		preexp = *exps;
 		if (i == j) {
-			continue;
+			if ((*exps)[i] == "-" || (*exps)[i] == "|") {
+				if ((*exps)[i] == "-") {
+					(*exps)[i] == "|";
+				}
+				else {
+					(*exps)[i] == "-";
+				}
+			}
+			else
+				continue;
 		}
 		if (((*exps)[i] == "-" || (*exps)[i] == "|") && ((*exps)[j] == "-" || (*exps)[j] == "|")) {
 			swap((*exps)[i], (*exps)[j]);
@@ -199,9 +235,14 @@ void FloorPlan::simulatedAnnealing(std::vector<std::string>* exps, double T0, do
 			preval = val;
 		}
 		else {
-			swap((*exps)[i], (*exps)[j]);
+			*exps = preexp;
+			//swap((*exps)[i], (*exps)[j]);
 		}
 		T0 *= at;
+		if (L % 200 == 0) {
+			cout << "-\\";
+		}
+		//cout <<"process:" << L << " " << T0 << endl;
 		if (T0 < E) {
 			break;
 		}
@@ -213,6 +254,7 @@ void FloorPlan::simulatedAnnealing(std::vector<std::string>* exps, double T0, do
 		cout << endl;*/
 		L--;
 	}
+	cout << endl;
 	(*exps) = minexp;
 	computeAreaLen(&area, &len, *exps);
 	cout << "Area:" << area << endl;
@@ -279,6 +321,7 @@ void FloorPlan::computeAreaLen(int *area, double *len, std::vector<std::string> 
 			exp.erase(exp.begin() + i - 2);
 		}
 	}
+	//cout << exp[0] << " " << nodes[maps[exp[0]]].width << " " << nodes[maps[exp[0]]].height << endl;
 	*area = nodes[maps[exp[0]]].width * nodes[maps[exp[0]]].height;
 	int r0 = atoi(exp[0].c_str());
 	nodes[maps[exp[0]]].x = 0;
@@ -347,6 +390,8 @@ void FloorPlan::computeAreaLen(int *area, double *len, std::vector<std::string> 
 		allen += abs(x2 - x1) + abs(y2 - y1);
 	}
 	block_tmp.clear();
+	nodes.clear();
+	maps.clear();
 	*len = allen;
 }
 
