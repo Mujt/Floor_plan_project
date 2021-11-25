@@ -13,7 +13,7 @@ enum blockType
 
 typedef struct Coordinate {
 	int x, y;
-};
+}Coordinate;
 
 typedef struct Block { 
 	int idNum;
@@ -23,6 +23,8 @@ typedef struct Block {
 	int coordNum; //形状
 	Coordinate coords[4];
 
+	int width, height;
+	int x, y;
 	
 	Block() {
 		coordNum = 0;
@@ -48,3 +50,11 @@ typedef struct Net {
 	int netDegree;
 	std::vector<Block_tmp> blocks;
 }Net;
+
+typedef struct Node {
+	int op;//非叶子节点1:|,2：-
+	int val;//叶子节点
+	int lchild, rchild, parent;
+	int width, height;
+	int x, y;
+}Node;

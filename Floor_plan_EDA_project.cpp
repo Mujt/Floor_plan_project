@@ -8,25 +8,27 @@
 #include <sstream>
 #include <stdlib.h>
 
-#include "src/dataStruct.h"
+#include "dataStruct.h"
+#include "FloorPlanAlgorithm.h"
 using namespace std;
 
 string typeStr[] = { "softrectilinear","hardrectilinear","terminal" };
 vector<Block> blocks;
 vector<Net> nets;
+map<string, int> blocksMap;
 
 void readFromFile() {
-    ifstream input1, input2;
+    ifstream input1, input2, input3;
     input1.open("ami33.blocks", ios::out | ios::in);
     input2.open("ami33.nets", ios::out | ios::in);
+    input3.open("ami33.pl", ios::out | ios::in);
 
-    string data1, data2;
+    string data1, data2, data3;
     regex reg1("(.+) (softrectilinear|hardrectilinear|terminal)( \d+){0,1}( \((\\d+)\\, (\\d+)\))*");
     regex reg2("(\\()(\\d+)(\\, )(\\d+)(\\))");
     regex reg3("\\d+");
     smatch m;
     int id = 1;
-    map<string, int> blocksMap;
     if (input1) {
         while (getline(input1, data1)) {
             //cout << data1 << endl;
@@ -35,7 +37,7 @@ void readFromFile() {
                 Block b;
                 b.idNum = id++;
                 b.id = m.str(1);
-                blocksMap[b.id] = b.idNum;
+                blocksMap[b.id] = b.idNum - 1;
                 for (int i = 0; i < 3; i++) {
                     if (typeStr[i].compare(m.str(2)) == 0) {
                         b.type = blockType(i);
@@ -44,6 +46,8 @@ void readFromFile() {
                     }
                 }
                 if (b.type == Terminals) {
+                    b.width = 0;
+                    b.height = 0;
                     blocks.push_back(b);
                     continue;
                 }
@@ -57,8 +61,9 @@ void readFromFile() {
                     j++;
                     its = m[0].second;
                 }
+                b.width = b.coords[1].y;
+                b.height = b.coords[2].x;
                 blocks.push_back(b);
-
             }
         }
     }
@@ -124,11 +129,38 @@ void readFromFile() {
         }
         cout << endl;
     }
+    string bid;
+    int a, b;
+    regex reg6("(.+)(\t|\s)(\\d+)(\t|\s)(\\d+)");
+    if (input3) {
+        while (getline(input3,data3)) {
+            bool found = regex_search(data3, m, reg6);
+            bid = m.str(1);
+            a = atoi(m.str(3).c_str());
+            b = atoi(m.str(5).c_str());
+            blocks[blocksMap[bid]].x = a;
+            blocks[blocksMap[bid]].y = b;
+        }
+    }
+    else {
+        cout << "ami33.pl not exists!" << endl;
+    }
+    for (int i = 0; i < blocks.size(); i++) {
+        cout << blocks[i].id << " " << blocks[i].idNum << " " << blocks[i].x << " "
+            << blocks[i].y<<endl;
+    }
     input1.close();
     input2.close();
+    input3.close();
+}
+
+void run_floor_plan() {
+    FloorPlan fpl = FloorPlan(blocks,nets,blocksMap);
+    fpl.run();
 }
 
 int main()
 {
     readFromFile();
+    run_floor_plan();
 }
